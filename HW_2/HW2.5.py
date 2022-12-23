@@ -1,14 +1,13 @@
-# Даны два массива:
-# [1, 2, 3, 2, 0] и [5, 1, 2, 7, 3, 2]
-# Надо вернуть их пересечение
-list1 = [1, 2, 3, 2, 0]
-list2= [5, 1, 2, 7, 3, 2]
-result = []
 
-templist = list2
-for i in list1:
-    if i in templist:
-        result.append(i)
-        templist.remove(i)
-
-print (result)
+import time
+from random import *
+n = int(input("Введите n: "))
+list = []
+for _ in range (n):
+        list.append(randint(-n, n+1))
+print ("list before shuffling ", list)
+for _ in range (randint(1, 5)):
+    i1 = randint(0, n-1)
+    i2 = randint(0, n-1)
+    list[i1], list [i2] = list[i2], list [i1]
+print ("list after shuffling ", list)

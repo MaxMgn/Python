@@ -1,67 +1,85 @@
 import telebot
-from telebot import types
+# from telebot import types
 import random
 bot = telebot.TeleBot("5613077244:AAE9_HLBAIDwtdAd7U7LXDwLWO0XsmjS25Y")
 
-candy = 221
-step_max = 28
-@bot.message_handler(commands = ['start'])#вызов функции по команде в списке
+candies = 221
+max_candies = 28
+
+@bot.message_handler(commands=["start"])
 def start(message):
-    bot.send_message(message.chat.id,f"/button")#отправка сообщения (кому отправляем, что отправляем(str))
+    global flag
+    bot.send_message(message.chat.id, f"Приветствую вас в игре!")
+    flag = random.choice(["user", "bot"])
+    bot.send_message(message.chat.id, f"Всего в игре {candies} конфет")
+    if flag == "user":
+        bot.send_message(message.chat.id,f"Первым ходите вы") # отправка сообщения (кому отправляем, что отправляем(str))
+    else:
+        bot.send_message(message.chat.id,f"Первым ходит бот")# отправка сообщения (кому отправляем, что отправляем(str))
+    controller(message)
 
-@bot.message_handler(commands=["button"])
-def button(message):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)#создание клавиатуры
-    but1 = types.KeyboardButton("Начать игру")#создание кнопок
-    markup.add(but1)#добавление кнопок
-    bot.send_message(message.chat.id,"Нажми на кнопку", reply_markup=markup)
-
-def step_number(message):
-    step = int(message.text)
-    return step
-
-
-@bot.message_handler(content_types=["text"])
 def controller(message):
-    if message.text == "Начать игру":
-        global candy
-        global step_max
-        first_step = random.randint(1, 2)
-        if first_step == 1:
-            bot.send_message(message.chat.id,f"Первым ходит игрок")
+    global flag
+    if candies > 0 :
+        if flag == "user":
+            bot.send_message(message.chat.id, f"Ваш ход введите кол-во конфет от 0 до {max_candies}")
+            bot.register_next_step_handler(message,player_move)
         else:
-            bot.send_message(message.chat.id,f"Первым ходит бот")
-        while candy > 0:
-            if first_step == 1:
-                bot.send_message(message.chat.id, f"Игрок, введите количество конфет:")
-                step = bot.register_next_step_handler(message, step_number)
-                bot.send_message(message.chat.id, f"Пользователь взял {str(step)} конфет")
-                if step <= 0 or step > 28:
-                    bot.send_message(message.chat.id, f"Столько конфет нельзя брать!")
-                else:
-                    candy -= step
-                    if candy < 0:
-                        bot.send_message(message.chat.id, f"Столько конфет на столе нет!")
-                        candy += step
-                    else:
-                        bot.send_message(message.chat.id, f"Конфет осталось {str(candy)}")
-                        first_step = 2
-            else:
-                if candy <= step_max:
-                    step = candy
-                    print(f"Бот взял {step} конфет")
-                    candy -= step
-                    first_step = 1
-                else:
-                    step = random.randint(1, 28)
-                    if step < candy:
-                        print(f"Бот взял {step} конфет")
-                        candy -= step
-                        print(f"Конфет осталось {candy}")
-                        first_step = 1
-                    else:
-                        step = candy
-                        print(f"Бот взял {step} конфет")
-                        candy -= step
-                        first_step = 1
+            computer_move(message)
+    else: 
+        flag = "user" if flag == "bot" else "bot"
+        bot.send_message(message.chat.id,f"Победил  {flag}! ")
+
+def computer_move(message):
+    global candies, flag
+    if candies <= max_candies:
+        number_to_take = candies
+    elif candies % max_candies == 0:
+        number_to_take = random.randint(1, max_candies)
+    else:
+        number_to_take = candies % (max_candies + 1)
+        candies -= number_to_take
+    bot.send_message(message.chat.id, f"бот взял {number_to_take} конфет")
+    bot.send_message(message.chat.id, f"осталось {candies}")
+    flag = "user" if flag == "bot" else "bot"
+    controller(message)
+
+
+def player_move(message):
+    global candies, flag
+    number_to_take = 0
+    while (number_to_take < 1 or number_to_take > 28 or number_to_take > candies):
+        number_to_take = int(message.text)
+        bot.send_message(message.chat.id, f"игрок пытается взять {number_to_take}")
+    candies -= number_to_take
+    bot.send_message(message.chat.id, f"осталось {candies}")
+    flag = "user" if flag == "bot" else "bot"
+    controller(message)
+    
 bot.infinity_polling()
+
+# def player_move ():   
+#     number_to_take = 0
+#     while (number_to_take < 1 or number_to_take > 28 or number_to_take > candies):
+#         number_to_take = input("insert candies number to take: ")
+#     return number_to_take
+
+# def computer_move (candies):
+#     number_to_take = candies %  29
+#     if (number_to_take == 0):
+#         number_to_take = randint(1, 28)
+#     print ("computer took: " + str(number_to_take))
+#     return number_to_take
+
+# candies = 221
+# while True:
+#     print ("candies left: " + str(candies))
+#     candies = candies - player_move ()
+#     if candies == 0:
+#         print ("player win")
+#         break
+#     print ("candies left: " + str(candies))
+#     candies = candies - computer_move (candies)
+#     if candies == 0:
+#         print ("computer win")
+#         break
